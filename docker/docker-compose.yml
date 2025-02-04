@@ -1,0 +1,9 @@
+version: '3'
+services:
+  sketch:
+    build: .
+    volumes:
+      - ./input:/input
+      - ./output:/output
+    environment:
+      - LOAD_SIZE=512
