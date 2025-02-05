@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker_web/file_picker_web.dart';
+import 'package:file_picker/file_picker.dart';
 import 'editor_screen.dart';
 
 class HomeScreen extends StatelessWidget {
