@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
 
 class ImageProcessor {
-  static const String _apiUrl = '/api/process-image';
   static const String _modelVersion = '435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117';
   static const String _apiToken = 'r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa';
 
@@ -37,12 +36,20 @@ class ImageProcessor {
       // 将图片转换为base64
       final base64Image = base64Encode(imageBytes);
 
+      // 获取当前URL
+      final currentUrl = html.window.location.href;
+      final uri = Uri.parse(currentUrl);
+      final apiUrl = '${uri.scheme}://${uri.host}${uri.port != 80 && uri.port != 443 ? ':${uri.port}' : ''}/api/process-image';
+      
+      developer.log('API URL: $apiUrl', name: 'ImageProcessor');
+
       // 发送到我们自己的API
       developer.log('发送API请求...', name: 'ImageProcessor');
       final response = await http.post(
-        Uri.parse(_apiUrl),
+        Uri.parse(apiUrl),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: jsonEncode({
           'image': 'data:image/png;base64,$base64Image',
@@ -88,12 +95,20 @@ class ImageProcessor {
       developer.log('开始处理图片', name: 'ImageProcessor');
       developer.log('图片路径: $imagePath', name: 'ImageProcessor');
 
+      // 获取当前URL
+      final currentUrl = html.window.location.href;
+      final uri = Uri.parse(currentUrl);
+      final apiUrl = '${uri.scheme}://${uri.host}${uri.port != 80 && uri.port != 443 ? ':${uri.port}' : ''}/api/process-image';
+      
+      developer.log('API URL: $apiUrl', name: 'ImageProcessor');
+
       // 发送到我们自己的API
       developer.log('发送API请求...', name: 'ImageProcessor');
       final response = await http.post(
-        Uri.parse(_apiUrl),
+        Uri.parse(apiUrl),
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: jsonEncode({
           'image': imagePath,
