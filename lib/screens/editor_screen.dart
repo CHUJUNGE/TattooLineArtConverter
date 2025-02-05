@@ -23,8 +23,7 @@ class _EditorScreenState extends State<EditorScreen> {
     });
 
     try {
-      final processor = ImageProcessor();
-      final result = await processor.processImage(widget.imagePath);
+      final result = await ImageProcessor.processImage(widget.imagePath);
       
       setState(() {
         _processedImagePath = result;
@@ -46,12 +45,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
     try {
       if (kIsWeb) {
-        // Web平台：触发下载
-        final anchor = html.AnchorElement(
-          href: _processedImagePath!,
-        )
-          ..setAttribute('download', 'tattoo_line_art.png')
-          ..click();
+        ImageProcessor.downloadImage(_processedImagePath!, 'tattoo_line_art.png');
       } else {
         // 移动平台：保存到相册
         final fileName = 'tattoo_line_art_${DateTime.now().millisecondsSinceEpoch}.png';

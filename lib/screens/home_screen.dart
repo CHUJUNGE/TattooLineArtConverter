@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'editor_screen.dart';
@@ -17,10 +19,7 @@ class HomeScreen extends StatelessWidget {
         if (!context.mounted) return;
         
         if (file.bytes != null) {
-          final base64Image = Uri.dataFromBytes(
-            file.bytes!,
-            mimeType: 'image/${file.extension}',
-          ).toString();
+          final base64Image = 'data:image/${file.extension};base64,${base64Encode(file.bytes!)}';
           
           Navigator.push(
             context,
