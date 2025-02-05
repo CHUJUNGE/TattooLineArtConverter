@@ -7,3 +7,6 @@ export PATH="$PATH:`pwd`/flutter/bin"
 # Install dependencies and build
 flutter pub get
 flutter build web --release
+
+# Move build files to the correct location
+mv build/web/* .

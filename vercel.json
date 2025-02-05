@@ -1,19 +1,9 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "build/web/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.+\\.[a-z]+)$",
-      "dest": "/build/web/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/build/web/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
