@@ -4,7 +4,8 @@
   "outputDirectory": "build/web",
   "installCommand": "curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs",
   "builds": [
-    { "src": "/api/**/*.js", "use": "@vercel/node" }
+    { "src": "/api/**/*.js", "use": "@vercel/node" },
+    { "src": "build/web/**/*", "use": "@vercel/static" }
   ],
   "routes": [
     {
@@ -18,11 +19,20 @@
       }
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "/build/web/assets/$1"
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "/build/web/icons/$1"
+    },
+    {
+      "src": "/(favicon\\.ico|manifest\\.json|flutter\\.js|main\\.dart\\.js.*)",
+      "dest": "/build/web/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/build/web/index.html"
     }
   ],
   "env": {
