@@ -13,7 +13,7 @@ class ImageProcessor {
   }) async {
     try {
       if (_apiToken.isEmpty) {
-        throw Exception('Replicate API token not found. Please check your .env file.');
+        throw Exception('Replicate API token not found.');
       }
 
       // 读取图片数据
