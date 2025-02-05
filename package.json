@@ -4,7 +4,6 @@
   "description": "将纹身图片转换为高精度黑白线稿",
   "main": "api/process-image.js",
   "scripts": {
-    "build": "bash ./vercel.build.sh",
     "vercel-build": "bash ./vercel.build.sh"
   },
   "engines": {

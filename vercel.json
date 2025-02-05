@@ -1,45 +1,17 @@
 {
   "version": 2,
-  "buildCommand": "bash ./vercel.build.sh",
-  "outputDirectory": "build/web",
   "builds": [
-    { "src": "/api/**/*.js", "use": "@vercel/node" },
+    { "src": "api/**/*.js", "use": "@vercel/node" },
     { "src": "build/web/**/*", "use": "@vercel/static" }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
-        "Access-Control-Allow-Credentials": "true"
-      }
-    },
-    {
-      "src": "/(favicon\\.ico|manifest\\.json|flutter\\.js|main\\.dart\\.js.*)",
-      "dest": "/$1"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/icons/(.*)",
-      "dest": "/icons/$1"
-    },
-    {
-      "src": "/packages/(.*)",
-      "dest": "/packages/$1"
-    },
-    {
-      "src": "/canvaskit/(.*)",
-      "dest": "/canvaskit/$1"
+      "dest": "/api/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/build/web/$1"
     }
   ],
   "env": {
