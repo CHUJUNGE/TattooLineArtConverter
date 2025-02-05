@@ -1,8 +1,10 @@
 {
   "version": 2,
+  "buildCommand": "git clone https://github.com/flutter/flutter.git && export PATH=\"$PATH:`pwd`/flutter/bin\" && flutter doctor && flutter pub get && flutter build web --release",
+  "outputDirectory": "build/web",
+  "installCommand": "curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs",
   "builds": [
-    { "src": "/api/**/*.js", "use": "@vercel/node" },
-    { "src": "/**/*.*", "use": "@vercel/static" }
+    { "src": "/api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     {
@@ -16,25 +18,11 @@
       }
     },
     {
-      "src": "/favicon.ico",
-      "dest": "/web/favicon.ico"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/web/manifest.json"
-    },
-    {
-      "src": "/icons/(.*)",
-      "dest": "/web/icons/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/web/$1",
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/web/index.html"
+      "dest": "/index.html"
     }
   ],
   "env": {
