@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/image_processor.dart';
 
@@ -69,15 +70,22 @@ class _EditorScreenState extends State<EditorScreen> {
     if (_processedImagePath == null) return;
 
     try {
-      final downloadsPath = '${Platform.environment['USERPROFILE']}\\Downloads';
-      final fileName = 'tattoo_line_art_${DateTime.now().millisecondsSinceEpoch}.png';
-      final savePath = '$downloadsPath\\$fileName';
-      
-      await File(_processedImagePath!).copy(savePath);
+      if (kIsWeb) {
+        final fileName = 'tattoo_line_art_${DateTime.now().millisecondsSinceEpoch}.png';
+        ImageProcessor.downloadImage(_processedImagePath!, fileName);
+      } else {
+        final downloadsPath = '${Platform.environment['USERPROFILE']}\\Downloads';
+        final fileName = 'tattoo_line_art_${DateTime.now().millisecondsSinceEpoch}.png';
+        final savePath = '$downloadsPath\\$fileName';
+        
+        await File(_processedImagePath!).copy(savePath);
+      }
       
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('图片已保存到: $savePath')),
+        kIsWeb
+          ? const SnackBar(content: Text('图片已开始下载'))
+          : SnackBar(content: Text('图片已保存到: $savePath')),
       );
     } catch (e) {
       if (!mounted) return;
@@ -98,12 +106,12 @@ class _EditorScreenState extends State<EditorScreen> {
     required String rightLabel,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: kIsWeb ? CrossAxisAlignment.start : CrossAxisAlignment.stretch,
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: kIsWeb ? CrossAxisAlignment.start : CrossAxisAlignment.start,
             children: [
               Text(
                 label,
@@ -127,24 +135,33 @@ class _EditorScreenState extends State<EditorScreen> {
           value: value,
           min: min,
           max: max,
-          divisions: 100,
-          label: value.toStringAsFixed(1),
-          onChanged: (newValue) {
-            onChanged(newValue);
-            _processImage();
-          },
+          divisions: kIsWeb ? null : 100,
+          label: kIsWeb ? null : value.toStringAsFixed(1),
+          onChanged: onChanged,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(leftLabel, style: TextStyle(color: Colors.grey[600])),
-              Text(rightLabel, style: TextStyle(color: Colors.grey[600])),
+              Text(
+                leftLabel,
+                style: TextStyle(
+                  fontSize: kIsWeb ? 12 : 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              Text(
+                rightLabel,
+                style: TextStyle(
+                  fontSize: kIsWeb ? 12 : 14,
+                  color: Colors.grey[600],
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        kIsWeb ? const SizedBox() : const SizedBox(height: 16),
       ],
     );
   }
@@ -155,12 +172,11 @@ class _EditorScreenState extends State<EditorScreen> {
       appBar: AppBar(
         title: const Text('编辑线稿'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _processedImagePath == null
-                ? null
-                : _saveImage,
-          ),
+          if (_processedImagePath != null)
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveImage,
+            ),
         ],
       ),
       body: Stack(
@@ -169,33 +185,61 @@ class _EditorScreenState extends State<EditorScreen> {
             children: [
               Expanded(
                 child: Center(
-                  child: _processedImagePath != null
-                      ? Image.file(
-                          File(_processedImagePath!),
-                          fit: BoxFit.contain,
-                        )
-                      : const Text('处理图片时出错'),
+                  child: _isProcessing
+                      ? const CircularProgressIndicator()
+                      : _processedImagePath != null
+                          ? kIsWeb
+                              ? Image.network(_processedImagePath!)
+                              : Image.file(
+                                  File(_processedImagePath!),
+                                  fit: BoxFit.contain,
+                                )
+                          : const Text('处理中...'),
                 ),
               ),
-              Container(
-                color: Colors.grey[100],
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildSlider(
-                      label: '线条清晰度',
-                      description: '调整此值来控制线条的清晰程度和数量',
-                      value: _threshold,
-                      min: 0.1,  
-                      max: 1.0,  
-                      onChanged: (value) => setState(() => _threshold = value),
-                      leftLabel: '更多细节',
-                      rightLabel: '更少细节',
+              kIsWeb
+                ? Card(
+                    margin: const EdgeInsets.all(8.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          _buildSlider(
+                            label: '细节阈值',
+                            description: '调整此值来控制线条的细节程度',
+                            value: _threshold,
+                            min: 0,
+                            max: 1,
+                            onChanged: (value) => setState(() {
+                              _threshold = value;
+                              _processImage();
+                            }),
+                            leftLabel: '更多细节',
+                            rightLabel: '更少细节',
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
+                  )
+                : Container(
+                    color: Colors.grey[100],
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildSlider(
+                          label: '线条清晰度',
+                          description: '调整此值来控制线条的清晰程度和数量',
+                          value: _threshold,
+                          min: 0.1,  
+                          max: 1.0,  
+                          onChanged: (value) => setState(() => _threshold = value),
+                          leftLabel: '更多细节',
+                          rightLabel: '更少细节',
+                        ),
+                      ],
+                    ),
+                  ),
             ],
           ),
           if (_isProcessing)

@@ -1,31 +1,46 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'editor_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage() async {
+  Future<void> _pickImage(BuildContext context) async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null && mounted) {
+      String? imagePath;
+      
+      if (kIsWeb) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          allowMultiple: false,
+        );
+
+        if (result != null && result.files.isNotEmpty) {
+          final bytes = result.files.first.bytes;
+          if (bytes != null) {
+            final base64Image = base64Encode(bytes);
+            imagePath = 'data:image/png;base64,$base64Image';
+          }
+        }
+      } else {
+        final ImagePicker picker = ImagePicker();
+        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+        imagePath = image?.path;
+      }
+
+      if (imagePath != null && context.mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EditorScreen(imagePath: image.path),
+            builder: (context) => EditorScreen(imagePath: imagePath!),
           ),
         );
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('选择图片时出错: $e')),
         );
@@ -37,8 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('纹身线稿转换'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('纹身线稿生成器'),
       ),
       body: Center(
         child: Column(
@@ -51,14 +65,30 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '选择纹身图片开始转换',
-              style: TextStyle(fontSize: 18),
+              '选择一张图片开始',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '支持JPG、PNG格式',
+              style: TextStyle(
+                color: Colors.grey,
+              ),
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: _pickImage,
               icon: const Icon(Icons.add_photo_alternate),
-              label: const Text('从相册选择'),
+              label: const Text('选择图片'),
+              onPressed: () => _pickImage(context),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+              ),
             ),
           ],
         ),
