@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "flutter pub get && flutter build web --release",
+  "buildCommand": "./flutter/bin/flutter pub get && ./flutter/bin/flutter build web --release",
   "outputDirectory": "build/web",
-  "installCommand": "git clone https://github.com/flutter/flutter.git && export PATH=\"$PATH:`pwd`/flutter/bin\" && flutter precache",
+  "installCommand": "git clone https://github.com/flutter/flutter.git && ./flutter/bin/flutter precache",
   "public": true,
   "rewrites": [
     {
