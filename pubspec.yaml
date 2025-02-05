@@ -1,5 +1,5 @@
 name: tattoo_line_art_converter
-description: A new Flutter project.
+description: A Flutter application for converting tattoo images into line art.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   http: ^1.1.0
+  universal_html: ^2.2.4
+  file_picker: ^6.1.1
 
 dev_dependencies:
   flutter_test:

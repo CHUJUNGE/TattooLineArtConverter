@@ -97,6 +97,59 @@ class ImageProcessor {
     }
   }
 
+  static Future<String> processImage(String imagePath) async {
+    try {
+      // 创建预测任务
+      final response = await http.post(
+        Uri.parse('https://api.replicate.com/v1/predictions'),
+        headers: {
+          'Authorization': 'Token r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'version': '435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117',
+          'input': {
+            'image': imagePath,
+          },
+        }),
+      );
+
+      if (response.statusCode != 201) {
+        throw Exception('创建预测任务失败: ${response.body}');
+      }
+
+      final predictionData = jsonDecode(response.body);
+      final String predictionId = predictionData['id'];
+
+      // 轮询获取结果
+      while (true) {
+        final statusResponse = await http.get(
+          Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
+          headers: {
+            'Authorization': 'Token r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa',
+          },
+        );
+
+        if (statusResponse.statusCode != 200) {
+          throw Exception('获取预测结果失败: ${statusResponse.body}');
+        }
+
+        final statusData = jsonDecode(statusResponse.body);
+        final String status = statusData['status'];
+
+        if (status == 'succeeded') {
+          return statusData['output'];
+        } else if (status == 'failed') {
+          throw Exception('预测任务失败: ${statusData['error']}');
+        }
+
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    } catch (e) {
+      throw Exception('处理图片时出错: $e');
+    }
+  }
+
   static void downloadImage(String base64Image, String fileName) {
     if (kIsWeb) {
       final anchor = html.AnchorElement(

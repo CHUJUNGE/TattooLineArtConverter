@@ -1,69 +1,44 @@
-import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 import '../services/image_processor.dart';
 
 class EditorScreen extends StatefulWidget {
   final String imagePath;
 
-  const EditorScreen({Key? key, required this.imagePath}) : super(key: key);
+  const EditorScreen({super.key, required this.imagePath});
 
   @override
-  _EditorScreenState createState() => _EditorScreenState();
+  State<EditorScreen> createState() => _EditorScreenState();
 }
 
 class _EditorScreenState extends State<EditorScreen> {
-  double _threshold = 0.5; 
   String? _processedImagePath;
   bool _isProcessing = false;
-  Timer? _debounceTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _processImage();
-  }
-
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
 
   Future<void> _processImage() async {
-    _debounceTimer?.cancel();
-    
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () async {
-      if (!mounted) return;
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final processor = ImageProcessor();
+      final result = await processor.processImage(widget.imagePath);
       
       setState(() {
-        _isProcessing = true;
+        _processedImagePath = result;
       });
-
-      try {
-        final processedPath = await ImageProcessor.convertToLineArt(
-          widget.imagePath,
-          threshold: _threshold,
-        );
-
-        if (!mounted) return;
-        setState(() {
-          _processedImagePath = processedPath;
-        });
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('处理图片时出错: $e')),
-        );
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isProcessing = false;
-          });
-        }
-      }
-    });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('处理图片时出错: $e')),
+      );
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
   }
 
   Future<void> _saveImage() async {
@@ -71,18 +46,25 @@ class _EditorScreenState extends State<EditorScreen> {
 
     try {
       if (kIsWeb) {
-        final fileName = 'tattoo_line_art_${DateTime.now().millisecondsSinceEpoch}.png';
-        ImageProcessor.downloadImage(_processedImagePath!, fileName);
+        // Web平台：触发下载
+        final anchor = html.AnchorElement(
+          href: _processedImagePath!,
+        )
+          ..setAttribute('download', 'tattoo_line_art.png')
+          ..click();
       } else {
-        final downloadsPath = '${Platform.environment['USERPROFILE']}\\Downloads';
+        // 移动平台：保存到相册
         final fileName = 'tattoo_line_art_${DateTime.now().millisecondsSinceEpoch}.png';
+        final downloadsPath = Directory.current.path;
         final savePath = '$downloadsPath\\$fileName';
         
         await File(_processedImagePath!).copy(savePath);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('图片已保存')),
-        );
       }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('图片已保存')),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -91,161 +73,52 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  Widget _buildSlider({
-    required String label,
-    required String description,
-    required double value,
-    required double min,
-    required double max,
-    required ValueChanged<double> onChanged,
-    required String leftLabel,
-    required String rightLabel,
-  }) {
-    return Column(
-      crossAxisAlignment: kIsWeb ? CrossAxisAlignment.start : CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: kIsWeb ? CrossAxisAlignment.start : CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: kIsWeb ? null : 100,
-          label: kIsWeb ? null : value.toStringAsFixed(1),
-          onChanged: onChanged,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                leftLabel,
-                style: TextStyle(
-                  fontSize: kIsWeb ? 12 : 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              Text(
-                rightLabel,
-                style: TextStyle(
-                  fontSize: kIsWeb ? 12 : 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-        kIsWeb ? const SizedBox() : const SizedBox(height: 16),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('编辑线稿'),
+        title: const Text('编辑图片'),
         actions: [
           if (_processedImagePath != null)
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: _saveImage,
+              tooltip: '保存图片',
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: _isProcessing
-                      ? const CircularProgressIndicator()
-                      : _processedImagePath != null
-                          ? kIsWeb
-                              ? Image.network(_processedImagePath!)
-                              : Image.file(
-                                  File(_processedImagePath!),
-                                  fit: BoxFit.contain,
-                                )
-                          : const Text('处理中...'),
-                ),
-              ),
-              kIsWeb
-                ? Card(
-                    margin: const EdgeInsets.all(8.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          _buildSlider(
-                            label: '细节阈值',
-                            description: '调整此值来控制线条的细节程度',
-                            value: _threshold,
-                            min: 0,
-                            max: 1,
-                            onChanged: (value) => setState(() {
-                              _threshold = value;
-                              _processImage();
-                            }),
-                            leftLabel: '更多细节',
-                            rightLabel: '更少细节',
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : Container(
-                    color: Colors.grey[100],
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildSlider(
-                          label: '线条清晰度',
-                          description: '调整此值来控制线条的清晰程度和数量',
-                          value: _threshold,
-                          min: 0.1,  
-                          max: 1.0,  
-                          onChanged: (value) => setState(() => _threshold = value),
-                          leftLabel: '更多细节',
-                          rightLabel: '更少细节',
-                        ),
-                      ],
-                    ),
-                  ),
-            ],
-          ),
-          if (_isProcessing)
-            Container(
-              color: Colors.black26,
-              child: const Center(
-                child: CircularProgressIndicator(),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Center(
+                child: _isProcessing
+                    ? const CircularProgressIndicator()
+                    : _processedImagePath != null
+                        ? kIsWeb
+                            ? Image.network(_processedImagePath!)
+                            : Image.file(File(_processedImagePath!))
+                        : kIsWeb
+                            ? Image.network(widget.imagePath)
+                            : Image.file(File(widget.imagePath)),
               ),
             ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _processImage,
+                    icon: const Icon(Icons.auto_fix_high),
+                    label: const Text('生成线稿'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
