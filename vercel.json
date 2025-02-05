@@ -1,11 +1,9 @@
 {
   "version": 2,
-  "framework": "flutter",
-  "buildCommand": "flutter pub get && flutter build web --release",
+  "buildCommand": "bash ./vercel.build.sh",
   "outputDirectory": "build/web",
   "builds": [
-    { "src": "/api/**/*.js", "use": "@vercel/node" },
-    { "src": "build/web/**/*", "use": "@vercel/static" }
+    { "src": "/api/**/*.js", "use": "@vercel/node" }
   ],
   "routes": [
     {
@@ -19,23 +17,12 @@
       }
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/build/web/assets/$1"
-    },
-    {
-      "src": "/icons/(.*)",
-      "dest": "/build/web/icons/$1"
-    },
-    {
-      "src": "/(favicon\\.ico|manifest\\.json|flutter\\.js|main\\.dart\\.js.*)",
-      "dest": "/build/web/$1"
-    },
-    {
-      "handle": "filesystem"
+      "src": "/(.*\\.[a-z0-9]+$)",
+      "dest": "/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/build/web/index.html"
+      "dest": "/index.html"
     }
   ],
   "env": {
