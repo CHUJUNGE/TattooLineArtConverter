@@ -4,10 +4,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
 
 class ImageProcessor {
-  static const String API_URL = 'https://api.replicate.com/v1';
-  static const String MODEL_VERSION = "a36ad6b92ced6e05ce2c6a71c0543f6a244382a9e3d9312a9771f3a57db92a54";
-  
-  static String get _apiToken => '';
+  static const String _apiUrl = 'https://api.replicate.com/v1/predictions';
+  static const String _modelVersion = '435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117';
+  static const String _apiToken = 'r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa';
 
   static Future<String> convertToLineArt(String imagePath, {
     double threshold = 0.5,
@@ -35,13 +34,13 @@ class ImageProcessor {
 
       // 创建预测
       final response = await http.post(
-        Uri.parse('$API_URL/predictions'),
+        Uri.parse('https://api.replicate.com/v1/predictions'),
         headers: {
           'Authorization': 'Token $_apiToken',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'version': MODEL_VERSION,
+          'version': 'a36ad6b92ced6e05ce2c6a71c0543f6a244382a9e3d9312a9771f3a57db92a54',
           'input': {
             'image': 'data:image/png;base64,$base64Image',
           },
@@ -58,7 +57,7 @@ class ImageProcessor {
       // 轮询获取结果
       while (true) {
         final statusResponse = await http.get(
-          Uri.parse('$API_URL/predictions/$predictionId'),
+          Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
           headers: {
             'Authorization': 'Token $_apiToken',
           },
@@ -97,13 +96,13 @@ class ImageProcessor {
     try {
       // 创建预测任务
       final response = await http.post(
-        Uri.parse('https://api.replicate.com/v1/predictions'),
+        Uri.parse(_apiUrl),
         headers: {
-          'Authorization': 'Token r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa',
+          'Authorization': 'Token $_apiToken',
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'version': '435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117',
+          'version': _modelVersion,
           'input': {
             'image': imagePath,
           },
@@ -120,9 +119,9 @@ class ImageProcessor {
       // 轮询获取结果
       while (true) {
         final statusResponse = await http.get(
-          Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
+          Uri.parse('$_apiUrl/$predictionId'),
           headers: {
-            'Authorization': 'Token r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa',
+            'Authorization': 'Token $_apiToken',
           },
         );
 
@@ -146,17 +145,13 @@ class ImageProcessor {
     }
   }
 
-  static void downloadImage(String base64Image, String fileName) {
+  static void downloadImage(String url, String fileName) {
     if (kIsWeb) {
       final anchor = html.AnchorElement(
-        href: base64Image,
+        href: url,
       )
         ..setAttribute('download', fileName)
-        ..style.display = 'none';
-      
-      html.document.body?.children.add(anchor);
-      anchor.click();
-      anchor.remove();
+        ..click();
     }
   }
 }
