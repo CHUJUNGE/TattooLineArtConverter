@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_picker_web/file_picker_web.dart';
 import 'editor_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -12,17 +12,25 @@ class HomeScreen extends StatelessWidget {
         allowMultiple: false,
       );
 
-      if (result != null && result.files.isNotEmpty) {
+      if (result != null) {
+        final file = result.files.first;
         if (!context.mounted) return;
         
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditorScreen(
-              imagePath: result.files.first.path!,
+        if (file.bytes != null) {
+          final base64Image = Uri.dataFromBytes(
+            file.bytes!,
+            mimeType: 'image/${file.extension}',
+          ).toString();
+          
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditorScreen(
+                imagePath: base64Image,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     } catch (e) {
       if (!context.mounted) return;

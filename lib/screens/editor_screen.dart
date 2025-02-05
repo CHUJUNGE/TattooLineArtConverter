@@ -96,9 +96,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 child: _isProcessing
                     ? const CircularProgressIndicator()
                     : _processedImagePath != null
-                        ? kIsWeb
-                            ? Image.network(_processedImagePath!)
-                            : Image.file(File(_processedImagePath!))
+                        ? Image.network(_processedImagePath!)
                         : kIsWeb
                             ? Image.network(widget.imagePath)
                             : Image.file(File(widget.imagePath)),
