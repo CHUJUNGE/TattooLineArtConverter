@@ -2,9 +2,6 @@
   "name": "tattoo-line-art-converter",
   "version": "1.0.0",
   "description": "将纹身图片转换为高精度黑白线稿",
-  "scripts": {
-    "build": "flutter build web --release && cp -r build/web/* public/"
-  },
   "dependencies": {
     "axios": "^1.6.0",
     "cors": "^2.8.5",

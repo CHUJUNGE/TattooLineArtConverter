@@ -1,12 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>纹身线稿生成器</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="将纹身图片转换为高精度黑白线稿">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="纹身线稿生成器">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>纹身线稿生成器</title>
+  <link rel="manifest" href="manifest.json">
+
+  <script>
+    // The value below is injected by flutter build, do not touch.
+    const serviceWorkerVersion = "2235170301";
+  </script>
+  <!-- This script adds the flutter initialization JS code -->
+  <script src="flutter.js" defer></script>
 </head>
 <body>
-    <h1>纹身线稿生成器</h1>
-    <p>正在加载...</p>
+  <script>
+    window.addEventListener('load', function(ev) {
+      // Download main.dart.js
+      var loading = document.createElement('div');
+      loading.style.display = 'flex';
+      loading.style.justifyContent = 'center';
+      loading.style.alignItems = 'center';
+      loading.style.height = '100vh';
+      loading.style.fontSize = '24px';
+      loading.innerText = '加载中...';
+      document.body.appendChild(loading);
+
+      _flutter = {
+        loader: {
+          loadEntrypoint: function(options) {
+            return new Promise(function(resolve, reject) {
+              if (window.flutter_web_optimizer) {
+                resolve(window.flutter_web_optimizer);
+              } else {
+                var script = document.createElement('script');
+                script.src = 'main.dart.js';
+                script.onload = function() {
+                  if (window.flutter_web_optimizer) {
+                    resolve(window.flutter_web_optimizer);
+                  } else {
+                    reject(new Error('Flutter initialization failed'));
+                  }
+                };
+                script.onerror = reject;
+                document.body.appendChild(script);
+              }
+            }).then(function(engineInitializer) {
+              return engineInitializer.initializeEngine();
+            }).then(function(appRunner) {
+              loading.remove();
+              return appRunner.runApp();
+            });
+          }
+        }
+      };
+
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        }
+      });
+    });
+  </script>
 </body>
 </html>
