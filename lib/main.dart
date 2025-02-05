@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,12 +10,28 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ÎÆÉíÏß¸å×ª»»',
+      title: 'Tattoo Line Art Generator',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Tattoo Line Art Generator'),
+      ),
+      body: const Center(
+        child: Text('Welcome to Tattoo Line Art Generator'),
+      ),
     );
   }
 }
