@@ -22,7 +22,7 @@
 
   <script>
     // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "2235170301";
+    var serviceWorkerVersion = null;
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
@@ -31,6 +31,39 @@
   <script>
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
+      _flutter = {
+        loader: {
+          loadEntrypoint: function(options) {
+            return new Promise(function(resolve, reject) {
+              try {
+                var script = document.createElement('script');
+                script.src = 'main.dart.js';
+                script.type = 'application/javascript';
+                script.onload = function() {
+                  if (window.flutter_web_optimizer) {
+                    resolve(window.flutter_web_optimizer);
+                  } else {
+                    reject(new Error('Flutter initialization failed'));
+                  }
+                };
+                script.onerror = function(e) {
+                  console.error('Error loading main.dart.js:', e);
+                  reject(e);
+                };
+                document.body.appendChild(script);
+              } catch (e) {
+                console.error('Error in loadEntrypoint:', e);
+                reject(e);
+              }
+            }).then(function(engineInitializer) {
+              return engineInitializer.initializeEngine();
+            }).then(function(appRunner) {
+              return appRunner.runApp();
+            });
+          }
+        }
+      };
+
       var loading = document.createElement('div');
       loading.style.display = 'flex';
       loading.style.justifyContent = 'center';
@@ -40,39 +73,13 @@
       loading.innerText = '加载中...';
       document.body.appendChild(loading);
 
-      _flutter = {
-        loader: {
-          loadEntrypoint: function(options) {
-            return new Promise(function(resolve, reject) {
-              if (window.flutter_web_optimizer) {
-                resolve(window.flutter_web_optimizer);
-              } else {
-                var script = document.createElement('script');
-                script.src = 'main.dart.js';
-                script.onload = function() {
-                  if (window.flutter_web_optimizer) {
-                    resolve(window.flutter_web_optimizer);
-                  } else {
-                    reject(new Error('Flutter initialization failed'));
-                  }
-                };
-                script.onerror = reject;
-                document.body.appendChild(script);
-              }
-            }).then(function(engineInitializer) {
-              return engineInitializer.initializeEngine();
-            }).then(function(appRunner) {
-              loading.remove();
-              return appRunner.runApp();
-            });
-          }
-        }
-      };
-
       _flutter.loader.loadEntrypoint({
         serviceWorker: {
           serviceWorkerVersion: serviceWorkerVersion,
         }
+      }).catch(function(e) {
+        console.error('Flutter initialization error:', e);
+        loading.innerText = '加载失败，请刷新页面重试';
       });
     });
   </script>

@@ -1,14 +1,12 @@
 {
   "version": 2,
   "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "builds": [
     {
       "src": "api/**/*.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "public/**/*",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -17,11 +15,9 @@
       "dest": "/api/$1"
     },
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "/(.*)",
-      "dest": "/public/$1"
+      "dest": "/$1",
+      "status": 200
     }
   ]
 }
