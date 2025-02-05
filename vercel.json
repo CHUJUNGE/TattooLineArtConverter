@@ -1,20 +1,16 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/**/*.js", "use": "@vercel/node" },
-    { "src": "build/web/**/*", "use": "@vercel/static" }
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/build/web/$1"
     }
   ],
-  "env": {
-    "REPLICATE_API_TOKEN": "r8_2Yd5Vf3lFTp0rvVQpQfALWbVNVxrEsYKRtYEa"
-  }
+  "public": true
 }
