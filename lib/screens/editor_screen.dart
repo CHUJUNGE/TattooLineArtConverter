@@ -79,14 +79,10 @@ class _EditorScreenState extends State<EditorScreen> {
         final savePath = '$downloadsPath\\$fileName';
         
         await File(_processedImagePath!).copy(savePath);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('图片已保存')),
+        );
       }
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        kIsWeb
-          ? const SnackBar(content: Text('图片已开始下载'))
-          : SnackBar(content: Text('图片已保存到: $savePath')),
-      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
