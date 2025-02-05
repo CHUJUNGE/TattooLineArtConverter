@@ -34,11 +34,14 @@ class ImageProcessor {
       final base64Image = base64Encode(imageBytes);
 
       // 创建预测
-      final response = await http.post(
+      final client = http.Client();
+      final response = await client.post(
         Uri.parse('https://api.replicate.com/v1/predictions'),
         headers: {
           'Authorization': 'Token $_apiToken',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': '*',
         },
         body: jsonEncode({
           'version': 'a36ad6b92ced6e05ce2c6a71c0543f6a244382a9e3d9312a9771f3a57db92a54',
@@ -46,30 +49,48 @@ class ImageProcessor {
             'image': 'data:image/png;base64,$base64Image',
           },
         }),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('请求超时，请稍后重试');
+        },
       );
 
       if (response.statusCode != 201) {
-        throw Exception('Failed to create prediction: ${response.body}');
+        final errorBody = jsonDecode(response.body);
+        throw Exception('Failed to create prediction: ${errorBody['error'] ?? response.body}');
       }
 
       final predictionData = jsonDecode(response.body);
       final String predictionId = predictionData['id'];
 
       // 轮询获取结果
-      while (true) {
-        final statusResponse = await http.get(
+      int retryCount = 0;
+      while (retryCount < 30) { // 最多尝试30次，每次等待1秒
+        final statusResponse = await client.get(
           Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
           headers: {
             'Authorization': 'Token $_apiToken',
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('获取结果超时，请稍后重试');
           },
         );
 
         if (statusResponse.statusCode != 200) {
-          throw Exception('Failed to get prediction status: ${statusResponse.body}');
+          final errorBody = jsonDecode(statusResponse.body);
+          throw Exception('Failed to get prediction status: ${errorBody['error'] ?? statusResponse.body}');
         }
 
         final statusData = jsonDecode(statusResponse.body);
-        if (statusData['status'] == 'succeeded') {
+        final String status = statusData['status'];
+
+        if (status == 'succeeded') {
+          client.close();
           final outputUrl = statusData['output'] as String;
           
           // 下载生成的图片
@@ -80,27 +101,36 @@ class ImageProcessor {
 
           // 返回base64格式的图片数据
           return 'data:image/png;base64,${base64Encode(imageResponse.bodyBytes)}';
-        } else if (statusData['status'] == 'failed') {
+        } else if (status == 'failed') {
+          client.close();
           throw Exception('Prediction failed: ${statusData['error']}');
         }
 
-        // 等待一秒后再次检查
         await Future.delayed(const Duration(seconds: 1));
+        retryCount++;
       }
+
+      client.close();
+      throw Exception('处理超时，请稍后重试');
     } catch (e) {
-      print('Error converting to line art: $e');
-      rethrow;
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Error converting to line art: $e');
     }
   }
 
   static Future<String> processImage(String imagePath) async {
     try {
       // 创建预测任务
-      final response = await http.post(
+      final client = http.Client();
+      final response = await client.post(
         Uri.parse(_apiUrl),
         headers: {
           'Authorization': 'Token $_apiToken',
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Access-Control-Allow-Origin': '*',
         },
         body: jsonEncode({
           'version': _modelVersion,
@@ -108,40 +138,64 @@ class ImageProcessor {
             'image': imagePath,
           },
         }),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw Exception('请求超时，请稍后重试');
+        },
       );
 
       if (response.statusCode != 201) {
-        throw Exception('创建预测任务失败: ${response.body}');
+        final errorBody = jsonDecode(response.body);
+        throw Exception('创建预测任务失败: ${errorBody['error'] ?? response.body}');
       }
 
       final predictionData = jsonDecode(response.body);
       final String predictionId = predictionData['id'];
 
       // 轮询获取结果
-      while (true) {
-        final statusResponse = await http.get(
+      int retryCount = 0;
+      while (retryCount < 30) { // 最多尝试30次，每次等待1秒
+        final statusResponse = await client.get(
           Uri.parse('$_apiUrl/$predictionId'),
           headers: {
             'Authorization': 'Token $_apiToken',
+            'Accept': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        ).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('获取结果超时，请稍后重试');
           },
         );
 
         if (statusResponse.statusCode != 200) {
-          throw Exception('获取预测结果失败: ${statusResponse.body}');
+          final errorBody = jsonDecode(statusResponse.body);
+          throw Exception('获取预测结果失败: ${errorBody['error'] ?? statusResponse.body}');
         }
 
         final statusData = jsonDecode(statusResponse.body);
         final String status = statusData['status'];
 
         if (status == 'succeeded') {
+          client.close();
           return statusData['output'];
         } else if (status == 'failed') {
+          client.close();
           throw Exception('预测任务失败: ${statusData['error']}');
         }
 
         await Future.delayed(const Duration(seconds: 1));
+        retryCount++;
       }
+
+      client.close();
+      throw Exception('处理超时，请稍后重试');
     } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
       throw Exception('处理图片时出错: $e');
     }
   }
