@@ -16,10 +16,12 @@ class EditorScreen extends StatefulWidget {
 class _EditorScreenState extends State<EditorScreen> {
   String? _processedImagePath;
   bool _isProcessing = false;
+  String? _errorMessage;
 
   Future<void> _processImage() async {
     setState(() {
       _isProcessing = true;
+      _errorMessage = null;
     });
 
     try {
@@ -27,11 +29,19 @@ class _EditorScreenState extends State<EditorScreen> {
       
       setState(() {
         _processedImagePath = result;
+        _errorMessage = null;
       });
     } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('处理图片时出错: $e')),
+        SnackBar(
+          content: Text(_errorMessage ?? '处理图片时出错'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
       );
     } finally {
       setState(() {
@@ -88,12 +98,41 @@ class _EditorScreenState extends State<EditorScreen> {
             Expanded(
               child: Center(
                 child: _isProcessing
-                    ? const CircularProgressIndicator()
-                    : _processedImagePath != null
-                        ? Image.network(_processedImagePath!)
-                        : kIsWeb
-                            ? Image.network(widget.imagePath)
-                            : Image.file(File(widget.imagePath)),
+                    ? const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('正在处理图片，请稍候...'),
+                        ],
+                      )
+                    : _errorMessage != null
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 48,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(color: Colors.red),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _processImage,
+                                child: const Text('重试'),
+                              ),
+                            ],
+                          )
+                        : _processedImagePath != null
+                            ? Image.network(_processedImagePath!)
+                            : kIsWeb
+                                ? Image.network(widget.imagePath)
+                                : Image.file(File(widget.imagePath)),
               ),
             ),
             Padding(
