@@ -1,17 +1,13 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:image/image.dart' as img;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ImageProcessor {
   static const String API_URL = 'https://api.replicate.com/v1';
   static const String MODEL_VERSION = "a36ad6b92ced6e05ce2c6a71c0543f6a244382a9e3d9312a9771f3a57db92a54";
   
-  static String get _apiToken => dotenv.env['REPLICATE_API_TOKEN'] ?? '';
+  static String get _apiToken => '';
 
   static Future<String> convertToLineArt(String imagePath, {
     double threshold = 0.5,
