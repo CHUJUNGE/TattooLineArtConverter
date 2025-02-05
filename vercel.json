@@ -16,8 +16,25 @@
       }
     },
     {
+      "src": "/favicon.ico",
+      "dest": "/web/favicon.ico"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/web/manifest.json"
+    },
+    {
+      "src": "/icons/(.*)",
+      "dest": "/web/icons/$1"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "dest": "/web/$1",
+      "continue": true
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/web/index.html"
     }
   ],
   "env": {
