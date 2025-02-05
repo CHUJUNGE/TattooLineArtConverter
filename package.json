@@ -1,0 +1,12 @@
+{
+  "name": "tattoo-line-art-converter",
+  "version": "1.0.0",
+  "description": "将纹身图片转换为高精度黑白线稿",
+  "main": "api/process-image.js",
+  "scripts": {
+    "build": "chmod +x vercel.build.sh && ./vercel.build.sh"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
